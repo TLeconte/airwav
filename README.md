@@ -26,13 +26,14 @@ Record in mp3 files 8k  mono.
 ## Example
 
 > airwav -d audiodir -s LFRN -r 0 120.5
+
 will create the mp3 file LFRN_120.50_2017-12-23T17:50:50Z.mp3 in dir audiodir
 
 Note : mp3 files are created only if squelch opens. Recording stop when squelch is closed more than silenttime secondes
 
 ## Build
 
-airwav dpends of the mp3lame lib, usb lib and rtlsdr or airspy lib
+airwav depends of the mp3lame lib, usb lib and rtlsdr or airspy lib
 
 For rtl sdr :
 > make -f Makefile.rtl
