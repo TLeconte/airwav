@@ -1,0 +1,12 @@
+CFLAGS=-Ofast -W -D WITH_RTL  -I /usr/local/include/librtlsdr
+LIBS=  -lusb-1.0 -lpthread -L /usr/local/lib -lrtlsdr -lm -lrt -lmp3lame
+CC=gcc
+
+
+all: airwav
+
+airwav: rtl.o airwav.o mp3out.o
+	$(CC) -o airwav rtl.o airwav.o $(LIBS) $(LDFLAGS) mp3out.o
+
+clean:
+	rm -f *.o airwav

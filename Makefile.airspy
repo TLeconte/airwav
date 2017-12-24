@@ -1,0 +1,14 @@
+
+CFLAGS= -Ofast -pthread -D WITH_AIRSPY -I.  `pkg-config --cflags libairspy`
+LIBS= -lm -pthread  `pkg-config --libs libairspy` -lusb-1.0 -lmp3lame
+
+CC=gcc
+
+
+all: airwav
+
+airwav: airspy.o airwav.o mp3out.o
+	$(CC) -o airwav airspy.o airwav.o $(LIBS) $(LDFLAGS) mp3out.o
+
+clean:
+	rm -f *.o airwav
