@@ -8,7 +8,7 @@ CC=gcc
 all: airwav
 
 airwav: airspy.o airwav.o mp3out.o
-	$(CC) -o airwav airspy.o airwav.o $(LIBS) $(LDFLAGS) mp3out.o
+	$(CC) -o airwav airspy.o airwav.o mp3out.o $(LIBS) $(LDFLAGS)
 
 clean:
 	rm -f *.o airwav
