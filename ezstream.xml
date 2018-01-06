@@ -1,0 +1,11 @@
+<ezstream>
+    <url>http://localhost:8000/airwav.mp3</url>
+    <format>MP3</format>
+    <filename>stdin</filename>
+    <playlist_program>0</playlist_program>
+
+    <svrinfoname>Airwav</svrinfoname>
+    <svrinfobitrate>32</svrinfobitrate>
+    <svrinfochannels>1</svrinfochannels>
+    <svrinfosamplerate>8000</svrinfosamplerate>
+</ezstream>

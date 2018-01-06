@@ -29,9 +29,11 @@ will create the mp3 file LFRN_120.50_2017-12-23T17:50:50Z.mp3 in directory audio
 
 Note : mp3 files are created only if squelch opens. Recording stop when squelch is closed more than 5 minutes.
 
-> airwav  -r 0 120.5 | ezstream 
+> airwav -r 0  120.5 | ezstream -c ezstream.xml
 
-send 32kbps CBR mp3 encoded audio to ezstream 
+send 32kbps CBR mp3 encoded audio to an Icecast server  (edit the ezstream.xml example file before launching)
+
+Note : All examples are for rtl sdr, remove -r 0 for airspy
 
 ## Build
 
