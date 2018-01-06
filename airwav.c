@@ -16,8 +16,8 @@
 
 int verbose = 0;
 int freq = 0;
-char *stid = "????";
-char *directory = ".";
+char *stid =  NULL ;
+char *directory = NULL;
 
 #if (WITH_RTL)
 int initRtl(int dev_index, int fr);
@@ -42,22 +42,23 @@ static void sighandler(int signum);
 static void usage(void)
 {
 	fprintf(stderr,
-		"airwav  AM recorder Copyright (c) 2017 Thierry Leconte \n\n");
+		"airwav  AM streamer/recorder Copyright (c) 2018 Thierry Leconte \n\n");
 	fprintf(stderr,
-		"Usage: airwav [-g lan_ain] [-t threshold ] [-l interval ] [-d time] [-v] [-s stationid] [-d directoty] [-r device] frequency\n");
+		"Usage: airwav [-g lan_ain] [-t threshold ] [-l interval ] [-v] [-s stationid] [-d directoty] [-r device] frequency\n");
 	fprintf(stderr, "\n\n");
-	fprintf(stderr, " -v :\t\t\tverbose\n");
-	fprintf(stderr,
-		" -t threshold:\t\t\tsquelch thresold in db (ie : -t -70)\n");
+	fprintf(stderr, " -v :\t\t\t\tverbose\n");
+	fprintf(stderr, " -t threshold:\t\t\tsquelch thresold in db (ie : -t -70)\n");
 	fprintf(stderr, " -l interval :\t\t\tmax duration of mp3 file in second (0=no limit)\n");
-	fprintf(stderr, " -d time :\t\t\tsilent time before closing mp3 file\n");
+	fprintf(stderr, " -d dir :\t\t\tstore in mp3 files in directoy dir instead of streaming to stdout\n");
 	fprintf(stderr, " -s stationid :\t\t\tstation id (ie : -s LFRN) used in mp3 file name\n");
-	fprintf(stderr, " -d :\t\t\tmp3 directoy (default .)\n");
 #if WITH_RTL
 	fprintf(stderr, " -p ppm :\t\t\tppm freq shift\n");
 	fprintf(stderr, " -r n :\t\t\trtl device number\n");
+	fprintf(stderr, "\n Example: airwav -s LFRN -d . -r 0 136.4 ");
 #endif
-	fprintf(stderr, "\n Example: airwav -s LFRN -r 0 136.4 ");
+#if WITH_AIR
+	fprintf(stderr, "\n Example: airwav -s LFRN -d . 136.4 ");
+#endif
 	exit(1);
 }
 
@@ -104,6 +105,9 @@ int main(int argc, char **argv)
 		exit(-2);
 	}
 	freq = (int)(atof(argv[optind]) * 1000000.0);
+
+	if(directory==NULL)
+		 interval=0;
 
 	sigact.sa_handler = sighandler;
 	sigemptyset(&sigact.sa_mask);
@@ -192,14 +196,17 @@ static void audioout(float V)
 			return;
 
 		outbuff[ind++] = 0;
-		zv++;
-		if (zv > silent * OUTFREQ) {
-			mp3_encode(outbuff, nzind+OUTFREQ/2);
-			mp3_close();
-			zv = 0;
+
+		if(directory) {
+			zv++;
+			if (zv > silent * OUTFREQ) {
+				mp3_encode(outbuff, nzind+OUTFREQ/2);
+				mp3_close();
+				zv = 0;
+				return;
+			}
 			return;
 		}
-		return;
 	}
 
 	if (mp3fd == NULL) {

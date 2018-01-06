@@ -16,17 +16,6 @@ int mp3_init(void)
 	char name[128];
 	char frstr[16];
 
-	tu = time(NULL);
-	strftime(tstr, 128, "%Y-%m-%dT%H:%M:%SZ", gmtime(&tu));
-
-	sprintf(frstr, "%3.2f", (float)freq / 1000000.0);
-
-	sprintf(name, "%s/%s_%s_%s.mp3", directory, stid, frstr, tstr);
-
-	mp3fd = fopen(name, "w+");
-	if (mp3fd == NULL)
-		return -1;
-
 	gfp = lame_init();
 	if (gfp == NULL)
 		return 1;
@@ -34,13 +23,38 @@ int mp3_init(void)
 	lame_set_num_channels(gfp, 1);
 	lame_set_in_samplerate(gfp, 8000);
 	lame_set_mode(gfp, 3);
-	lame_set_VBR(gfp, vbr_default);
 
-	id3tag_init(gfp);
-	id3tag_set_artist(gfp, stid);
-	id3tag_set_album(gfp, frstr);
-	id3tag_set_title(gfp, tstr);
-	id3tag_set_comment(gfp, "airwav SDR receiver");
+	if(directory) {
+
+		/* store in mp3 files */
+		tu = time(NULL);
+		strftime(tstr, 128, "%Y-%m-%dT%H:%M:%SZ", gmtime(&tu));
+
+		sprintf(frstr, "%3.2f", (float)freq / 1000000.0);
+
+		if(stid)
+			sprintf(name, "%s/%s_%s_%s.mp3", directory, stid, frstr, tstr);
+		else
+			sprintf(name, "%s/%s_%s.mp3", directory, frstr, tstr);
+
+		mp3fd = fopen(name, "w+");
+		if (mp3fd == NULL)
+			return -1;
+
+		lame_set_VBR(gfp, vbr_default);
+
+		id3tag_init(gfp);
+		id3tag_set_artist(gfp, stid);
+		id3tag_set_album(gfp, frstr);
+		id3tag_set_title(gfp, tstr);
+		id3tag_set_comment(gfp, "airwav SDR receiver");
+
+	} else {
+		/* stream to stderr */
+		mp3fd=stdout;
+
+		lame_set_brate(gfp, 32);
+	}
 
 	lame_init_params(gfp);
 
@@ -73,11 +87,14 @@ int mp3_close(void)
 	if (len)
 		fwrite(mp3buf, 1, len, mp3fd);
 
-	lame_mp3_tags_fid(gfp, mp3fd);
+	if(directory)
+		lame_mp3_tags_fid(gfp, mp3fd);
 
 	lame_close(gfp);
 
-	fclose(mp3fd);
+	if(mp3fd!=stdout)
+		 fclose(mp3fd);
+
 	mp3fd = NULL;
 
 }
