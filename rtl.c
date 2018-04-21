@@ -29,6 +29,12 @@
 #include <rtl-sdr.h>
 #include "airwav.h"
 
+#define INRATE 2000000
+#define IFFREQ 50000
+#define DOWNSC (INRATE/FSINT)
+
+#define INBUFSZ (DOWNSC*2048)
+
 extern int ppm;
 extern int verbose;
 extern int gain;
