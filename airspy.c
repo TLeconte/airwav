@@ -6,6 +6,10 @@
 #include <libairspy/airspy.h>
 #include "airwav.h"
 
+#define INRATE 5000000
+#define IFFREQ 1918400
+#define DOWNSC (INRATE/FSINT)
+
 extern int verbose;
 extern int gain;
 
@@ -13,7 +17,9 @@ extern void am_filter(complex float V);
 
 static struct airspy_device *device = NULL;
 
+static complex float Osc[DOWNSC];
 static complex float V = 0;
+static complex float D = 0;
 static int idx = 0;
 
 static int rx_callback(airspy_transfer_t * transfer)
@@ -24,25 +30,19 @@ static int rx_callback(airspy_transfer_t * transfer)
 	pt_rx_buffer = (unsigned short *)(transfer->samples);
 
 	for (i = 0; i < transfer->sample_count;) {
-		float S0, S1;
+		float S;
 
-		S0 = (float)((short)(pt_rx_buffer[i] & 0xfff) - 2048);
-		i++;
-		S1 = (float)((short)(pt_rx_buffer[i] & 0xfff) - 2048);
+		S = (float)((short)(pt_rx_buffer[i] & 0xfff) - 2048);
 		i++;
 
-		if (idx & 1)
-			V += (S0 + S1) + (S1 - S0) * I;
-		else
-			V -= (S0 + S1) + (S1 - S0) * I;
+                D += S * Osc[idx];
+                idx++;
 
-		idx++;
-
-		if (idx == DOWNSC) {
-			am_filter(V / DOWNSC / 2048.0);
-			V = 0;
-			idx = 0;
-		}
+                if (idx == DOWNSC) {
+                        am_filter(D / (float)DOWNSC / 2048.0);
+                        idx = 0;
+                        D = 0;
+                }
 	}
 
 	return 0;
@@ -58,6 +58,15 @@ int init_airspy(int freq)
 	if (result != AIRSPY_SUCCESS) {
 		fprintf(stderr, "airspy_open() failed: %s (%d)\n",
 			airspy_error_name(result), result);
+		airspy_exit();
+		return -1;
+	}
+
+	result = airspy_set_sample_type(device, AIRSPY_SAMPLE_UINT16_REAL);
+	if (result != AIRSPY_SUCCESS) {
+		fprintf(stderr, "airspy_set_sample_type() failed: %s (%d)\n",
+			airspy_error_name(result), result);
+		airspy_close(device);
 		airspy_exit();
 		return -1;
 	}
@@ -84,24 +93,14 @@ int init_airspy(int freq)
 		return -1;
 	}
 
-	result = airspy_set_sample_type(device, AIRSPY_SAMPLE_UINT16_REAL);
-	if (result != AIRSPY_SUCCESS) {
-		fprintf(stderr, "airspy_set_sample_type() failed: %s (%d)\n",
-			airspy_error_name(result), result);
-		airspy_close(device);
-		airspy_exit();
-		return -1;
-	}
-
-	if (gain > 15)
-		gain = 15;
+	if (gain > 21) gain = 21;
 	result = airspy_set_linearity_gain(device, gain);
 	if (result != AIRSPY_SUCCESS) {
 		fprintf(stderr, "airspy_set_linearity_gain() failed: %s (%d)\n",
 			airspy_error_name(result), result);
 	}
 
-	result = airspy_set_freq(device, freq);
+	result = airspy_set_freq(device, freq + IFFREQ - INRATE/4);
 	if (result != AIRSPY_SUCCESS) {
 		fprintf(stderr, "airspy_set_freq() failed: %s (%d)\n",
 			airspy_error_name(result), result);
@@ -109,6 +108,15 @@ int init_airspy(int freq)
 		airspy_exit();
 		return -1;
 	}
+
+	/* minimum bandwidth */
+	airspy_r820t_write(device, 10, 0xB0 | 15);
+	airspy_r820t_write(device, 11, 0xE0 | 8 );
+
+        for (i = 0; i < DOWNSC; i++) {
+                Osc[i] =
+                    cexpf(-I * i * 2 * M_PI * (float)IFFREQ / (float)INRATE);
+        }
 
 	return 0;
 }

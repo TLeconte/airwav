@@ -16,7 +16,7 @@
 
 int verbose = 0;
 int freq = 0;
-char *stid =  NULL ;
+char *stid =  "airwav" ;
 char *directory = NULL;
 
 #if (WITH_RTL)
@@ -28,7 +28,7 @@ int ppm = 0;
 static float threshold = 1e-7;
 #endif
 #ifdef WITH_AIRSPY
-int gain = 15;
+int gain = 20;
 int init_airspy(int freq);
 int runAirspy(void);
 static float threshold = 1e-8;
@@ -44,7 +44,7 @@ static void usage(void)
 	fprintf(stderr,
 		"airwav  AM streamer/recorder Copyright (c) 2018 Thierry Leconte \n\n");
 	fprintf(stderr,
-		"Usage: airwav [-g lan_ain] [-t threshold ] [-l interval ] [-v] [-s stationid] [-d directoty] [-r device] frequency\n");
+		"Usage: airwav [-g lan_ain] [-t threshold ] [-l interval ] [-v] [-s stationid] [-d directoty] [-r device] frequency (in Mhz\n");
 	fprintf(stderr, "\n\n");
 	fprintf(stderr, " -v :\t\t\t\tverbose\n");
 	fprintf(stderr, " -t threshold:\t\t\tsquelch thresold in db (ie : -t -70)\n");
@@ -105,6 +105,11 @@ int main(int argc, char **argv)
 		exit(-2);
 	}
 	freq = (int)(atof(argv[optind]) * 1000000.0);
+
+	if(freq<110000000 || freq > 140000000) {
+		fprintf(stderr, "invalid frequency\n");
+		exit(-2);
+	}
 
 	if(directory==NULL)
 		 interval=0;
