@@ -4,7 +4,9 @@ Record in VBR mp3 files or stream to stderr in CBR 32Kbps.
 
 
 ## Usage
-> airwav [-g gain] [-t threshold ] [-l interval ] [-v] [-s stationid] [-d directoty] [-r device] frequency (in Mhz)
+> airwav [-f] [-g gain] [-t threshold ] [-l interval ] [-v] [-s stationid] [-d directoty] [-r device] frequency (in Mhz)
+
+ -f : FM demodulation (default : AM)
 
  -t threshold :	squelch thresold in db (default -50)
 
