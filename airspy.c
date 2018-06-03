@@ -13,7 +13,7 @@
 extern int verbose;
 extern int gain;
 
-extern void am_filter(complex float V);
+extern void demod(complex float V);
 
 static struct airspy_device *device = NULL;
 
@@ -39,7 +39,7 @@ static int rx_callback(airspy_transfer_t * transfer)
                 idx++;
 
                 if (idx == DOWNSC) {
-                        am_filter(D / (float)DOWNSC / 2048.0);
+                        demod(D / (float)DOWNSC / 2048.0);
                         idx = 0;
                         D = 0;
                 }
@@ -53,6 +53,7 @@ int init_airspy(int freq)
 	int result;
 	uint32_t i, count;
 	uint32_t *supported_samplerates;
+	int lg;
 
 	result = airspy_open(&device);
 	if (result != AIRSPY_SUCCESS) {
@@ -93,8 +94,10 @@ int init_airspy(int freq)
 		return -1;
 	}
 
-	if (gain > 21) gain = 21;
-	result = airspy_set_linearity_gain(device, gain);
+	lg=(gain+540)/37;
+	if(lg>21) lg=21;
+	if(lg<0) lg=0;
+	result = airspy_set_linearity_gain(device, lg);
 	if (result != AIRSPY_SUCCESS) {
 		fprintf(stderr, "airspy_set_linearity_gain() failed: %s (%d)\n",
 			airspy_error_name(result), result);
@@ -110,8 +113,8 @@ int init_airspy(int freq)
 	}
 
 	/* minimum bandwidth */
-	airspy_r820t_write(device, 10, 0xB0 | 15);
-	airspy_r820t_write(device, 11, 0xE0 | 8 );
+	//airspy_r820t_write(device, 10, 0xB0 | 15);
+	//airspy_r820t_write(device, 11, 0xE0 | 8 );
 
         for (i = 0; i < DOWNSC; i++) {
                 Osc[i] =
