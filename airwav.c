@@ -20,18 +20,17 @@ int fmdemod = 0;
 char *stid =  "airwav" ;
 char *directory = NULL;
 int gain = 1000;
+static float threshold = 1e-5;
 
 #if (WITH_RTL)
 int initRtl(int dev_index, int fr);
 int runRtlSample(void);
 int devid = 0;
 int ppm = 0;
-static float threshold = 1e-7;
 #endif
 #ifdef WITH_AIRSPY
 int init_airspy(int freq);
 int runAirspy(void);
-static float threshold = 1e-8;
 #endif
 
 static int interval=0;
@@ -49,7 +48,7 @@ static void usage(void)
 	fprintf(stderr, " -v :\t\t\t\tverbose\n");
 	fprintf(stderr, " -f :\t\t\tFM demodulation (default AM)\n");
 	fprintf(stderr, " -g gain :\t\t\tgain in tenth of db (ie : 500 = 50 db)\n");
-	fprintf(stderr, " -t threshold:\t\t\tsquelch thresold in db (ie : -t -70)\n");
+	fprintf(stderr, " -t threshold:\t\t\tsquelch thresold in db (ie : -t -50)\n");
 	fprintf(stderr, " -l interval :\t\t\tmax duration of mp3 file in second (0=no limit)\n");
 	fprintf(stderr, " -d dir :\t\t\tstore in mp3 files in directoy dir instead of streaming to stdout\n");
 	fprintf(stderr, " -s name :\t\t\tmp3 file prefix name (default : airwav)\n");

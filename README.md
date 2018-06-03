@@ -6,7 +6,7 @@ Record in VBR mp3 files or stream to stderr in CBR 32Kbps.
 ## Usage
 > airwav [-g gain] [-t threshold ] [-l interval ] [-v] [-s stationid] [-d directoty] [-r device] frequency (in Mhz)
 
- -t threshold :	squelch thresold in db (default -70 for rtlsdr -80 for airspy)
+ -t threshold :	squelch thresold in db (default -50)
 
  -v : show signal level (usefull to set squelch thresold)
 
@@ -17,7 +17,8 @@ Record in VBR mp3 files or stream to stderr in CBR 32Kbps.
  -s stationid :	station id (ie : -s LFRN) used in mp3 file name
 
  -p ppm :  ppm freq shift
- -g gain in tens of db (ie : -g 400 ) 
+
+ -g gain in tenth of db (ie : -g 400 ) 
 
  -r n : rtl device number (mandatory for rtl sdr)
 
