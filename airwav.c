@@ -16,19 +16,19 @@
 
 int verbose = 0;
 int freq = 0;
+int fmdemod = 0;
 char *stid =  "airwav" ;
 char *directory = NULL;
+int gain = 1000;
 
 #if (WITH_RTL)
 int initRtl(int dev_index, int fr);
 int runRtlSample(void);
 int devid = 0;
-int gain = 1000;
 int ppm = 0;
 static float threshold = 1e-7;
 #endif
 #ifdef WITH_AIRSPY
-int gain = 20;
 int init_airspy(int freq);
 int runAirspy(void);
 static float threshold = 1e-8;
@@ -42,15 +42,17 @@ static void sighandler(int signum);
 static void usage(void)
 {
 	fprintf(stderr,
-		"airwav  AM streamer/recorder Copyright (c) 2018 Thierry Leconte \n\n");
+		"airwav  narrow band AM/FM streamer/recorder Copyright (c) 2018 Thierry Leconte \n\n");
 	fprintf(stderr,
-		"Usage: airwav [-g lan_ain] [-t threshold ] [-l interval ] [-v] [-s stationid] [-d directoty] [-r device] frequency (in Mhz\n");
+		"Usage: airwav [-f ][-g gain] [-t threshold ] [-l interval ] [-v] [-s stationid] [-d directoty] [-r device] frequency (in Mhz\n");
 	fprintf(stderr, "\n\n");
 	fprintf(stderr, " -v :\t\t\t\tverbose\n");
+	fprintf(stderr, " -f :\t\t\tFM demodulation (default AM)\n");
+	fprintf(stderr, " -g gain :\t\t\tgain in tenth of db (ie : 500 = 50 db)\n");
 	fprintf(stderr, " -t threshold:\t\t\tsquelch thresold in db (ie : -t -70)\n");
 	fprintf(stderr, " -l interval :\t\t\tmax duration of mp3 file in second (0=no limit)\n");
 	fprintf(stderr, " -d dir :\t\t\tstore in mp3 files in directoy dir instead of streaming to stdout\n");
-	fprintf(stderr, " -s stationid :\t\t\tstation id (ie : -s LFRN) used in mp3 file name\n");
+	fprintf(stderr, " -s name :\t\t\tmp3 file prefix name (default : airwav)\n");
 #if WITH_RTL
 	fprintf(stderr, " -p ppm :\t\t\tppm freq shift\n");
 	fprintf(stderr, " -r n :\t\t\trtl device number\n");
@@ -67,10 +69,13 @@ int main(int argc, char **argv)
 	int i, c;
 	struct sigaction sigact;
 
-	while ((c = getopt(argc, argv, "vr:g:p:t:s:d:l:")) != EOF) {
+	while ((c = getopt(argc, argv, "vr:g:p:t:s:d:l:f")) != EOF) {
 		switch ((char)c) {
 		case 'v':
 			verbose = 1;
+			break;
+		case 'f':
+			fmdemod = 1;
 			break;
 		case 't':
 			threshold = powf(10, atoi(optarg) / 10);
@@ -106,7 +111,7 @@ int main(int argc, char **argv)
 	}
 	freq = (int)(atof(argv[optind]) * 1000000.0);
 
-	if(freq<110000000 || freq > 140000000) {
+	if(freq<24000000 || freq > 1100000000) {
 		fprintf(stderr, "invalid frequency\n");
 		exit(-2);
 	}
@@ -237,17 +242,13 @@ static void sighandler(int signum)
 #define Kc 1.0/100e-3/OUTFREQ
 #define IMPLEN 1500
 
-static void squelch(double V)
+static void squelch(float V,float lv)
 {
 	static float impbuff[IMPLEN];
 	static int imp = 0;
 	static int gate = 0;
 	static float carrier = 0;
 	static int lvcpt=0;
-
-	float lv;
-
-	lv = V * V;
 
 	carrier = carrier + Kc * (lv - carrier);
 
@@ -312,14 +313,33 @@ static void squelch(double V)
 
 }
 
-void am_filter(complex float V)
+void demod(complex float V)
 {
 
 	static float fbuf[64];
 	static int fidx = 0;
 	static int ds = 0;
+	static float pPhy=0;
 
-	fbuf[fidx] = cabsf(V);
+	static float lv=0;
+
+	float l=cabsf(V);
+	lv+=l*l;
+
+	if(fmdemod==0) {
+		fbuf[fidx] = l;
+	} else {
+		float phy=cargf(V);
+		float dphy=phy-pPhy;
+
+                if (dphy > M_PI) dphy -= 2 * M_PI;
+                if (dphy < -M_PI) dphy += 2 * M_PI;
+	
+		fbuf[fidx] = dphy/(M_PI*5000.0/FSINT);
+
+		pPhy=phy;
+		
+	}
 	fidx = (fidx + 1) % 64;
 
 	/* polyphase filter */
@@ -328,12 +348,14 @@ void am_filter(complex float V)
 		int k, i;
 		double M;
 
+		lv=8*lv/ds;
 		ds = ds % 25;
 
 		M = 0;
 		for (i = fidx, k = ds; k < FILTER_NUM; k += 8, i = (i + 1) % 64)
 			M += fbuf[i] * filter[k];
 
-		squelch(M);
+		squelch(M,lv);
+		lv=0;
 	}
 }

@@ -39,7 +39,7 @@ extern int ppm;
 extern int verbose;
 extern int gain;
 
-extern void am_filter(complex float V);
+extern void demod(complex float V);
 
 static rtlsdr_dev_t *dev = NULL;
 
@@ -145,7 +145,7 @@ static void in_callback(unsigned char *rtlinbuff, unsigned int nread, void *ctx)
 		idx++;
 
 		if (idx == DOWNSC) {
-			am_filter(D / (float)DOWNSC / 128.0);
+			demod(D / (float)DOWNSC / 128.0);
 			idx = 0;
 			D = 0;
 		}
