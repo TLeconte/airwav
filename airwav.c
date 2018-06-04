@@ -6,6 +6,8 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
+
 #include <signal.h>
 #include <getopt.h>
 #include <math.h>
@@ -20,17 +22,19 @@ int fmdemod = 0;
 char *stid =  "airwav" ;
 char *directory = NULL;
 int gain = 1000;
-static float threshold = 1e-5;
+int rawout = 0;
 
 #if (WITH_RTL)
 int initRtl(int dev_index, int fr);
 int runRtlSample(void);
 int devid = 0;
 int ppm = 0;
+static float threshold = 1e-7;
 #endif
 #ifdef WITH_AIRSPY
 int init_airspy(int freq);
 int runAirspy(void);
+static float threshold = 1e-8;
 #endif
 
 static int interval=0;
@@ -46,9 +50,10 @@ static void usage(void)
 		"Usage: airwav [-f ][-g gain] [-t threshold ] [-l interval ] [-v] [-s stationid] [-d directoty] [-r device] frequency (in Mhz\n");
 	fprintf(stderr, "\n\n");
 	fprintf(stderr, " -v :\t\t\t\tverbose\n");
+	fprintf(stderr, " -a :\t\t\traw stdout output (16 bit signed 25Khz, no squelch)\n");
 	fprintf(stderr, " -f :\t\t\tFM demodulation (default AM)\n");
 	fprintf(stderr, " -g gain :\t\t\tgain in tenth of db (ie : 500 = 50 db)\n");
-	fprintf(stderr, " -t threshold:\t\t\tsquelch thresold in db (ie : -t -50)\n");
+	fprintf(stderr, " -t threshold:\t\t\tsquelch thresold in db (ie : -t -70)\n");
 	fprintf(stderr, " -l interval :\t\t\tmax duration of mp3 file in second (0=no limit)\n");
 	fprintf(stderr, " -d dir :\t\t\tstore in mp3 files in directoy dir instead of streaming to stdout\n");
 	fprintf(stderr, " -s name :\t\t\tmp3 file prefix name (default : airwav)\n");
@@ -68,13 +73,16 @@ int main(int argc, char **argv)
 	int i, c;
 	struct sigaction sigact;
 
-	while ((c = getopt(argc, argv, "vr:g:p:t:s:d:l:f")) != EOF) {
+	while ((c = getopt(argc, argv, "vr:g:p:t:s:d:l:fa")) != EOF) {
 		switch ((char)c) {
 		case 'v':
 			verbose = 1;
 			break;
 		case 'f':
 			fmdemod = 1;
+			break;
+		case 'a':
+			rawout = 1;
 			break;
 		case 't':
 			threshold = powf(10, atoi(optarg) / 10);
@@ -319,14 +327,15 @@ void demod(complex float V)
 	static int fidx = 0;
 	static int ds = 0;
 	static float pPhy=0;
-
 	static float lv=0;
 
 	float l=cabsf(V);
+	float o;
+
 	lv+=l*l;
 
 	if(fmdemod==0) {
-		fbuf[fidx] = l;
+		o = l;
 	} else {
 		float phy=cargf(V);
 		float dphy=phy-pPhy;
@@ -334,11 +343,19 @@ void demod(complex float V)
                 if (dphy > M_PI) dphy -= 2 * M_PI;
                 if (dphy < -M_PI) dphy += 2 * M_PI;
 	
-		fbuf[fidx] = dphy/(M_PI*5000.0/FSINT);
+		o = dphy/(2*M_PI*5000.0/FSINT);
 
 		pPhy=phy;
 		
 	}
+
+	if(rawout) {
+		int16_t v=o*32768;
+		write(1,&v,sizeof(v));
+		return;
+	}
+
+	fbuf[fidx]=o;
 	fidx = (fidx + 1) % 64;
 
 	/* polyphase filter */
