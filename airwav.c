@@ -359,7 +359,7 @@ void demod(complex float V)
 	fidx = (fidx + 1) % 64;
 
 	/* polyphase filter */
-	ds += 8;
+	ds += 16;
 	if (ds >= 25) {
 		int k, i;
 		double M;

@@ -1,4 +1,4 @@
-#define FSINT 25000
+#define FSINT 12500
 #define OUTFREQ 8000
 
 extern int freq;
