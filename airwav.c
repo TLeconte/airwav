@@ -50,7 +50,7 @@ static void usage(void)
 		"Usage: airwav [-f ][-g gain] [-t threshold ] [-l interval ] [-v] [-s stationid] [-d directoty] [-r device] frequency (in Mhz\n");
 	fprintf(stderr, "\n\n");
 	fprintf(stderr, " -v :\t\t\t\tverbose\n");
-	fprintf(stderr, " -a :\t\t\traw stdout output (16 bit signed 25Khz, no squelch)\n");
+	fprintf(stderr, " -a :\t\t\traw stdout output (16 bit signed 12500Hz, no squelch)\n");
 	fprintf(stderr, " -f :\t\t\tFM demodulation (default AM)\n");
 	fprintf(stderr, " -g gain :\t\t\tgain in tenth of db (ie : 500 = 50 db)\n");
 	fprintf(stderr, " -t threshold:\t\t\tsquelch thresold in db (ie : -t -70)\n");
