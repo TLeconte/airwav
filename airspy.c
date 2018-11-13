@@ -76,7 +76,7 @@ int init_airspy(int freq)
 	supported_samplerates = (uint32_t *) malloc(count * sizeof(uint32_t));
 	airspy_get_samplerates(device, supported_samplerates, count);
 	for (i = 0; i < count; i++)
-		if (supported_samplerates[i] == INRATE/2)
+		if (supported_samplerates[i] == INRATE)
 			break;
 	if (i >= count) {
 		fprintf(stderr, "did not find needed sampling rate\n");
