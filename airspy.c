@@ -53,6 +53,7 @@ int init_airspy(int freq)
 	int result;
 	uint32_t i, count;
 	uint32_t *supported_samplerates;
+	int Fc;
 	int lg;
 
 	result = airspy_open(&device);
@@ -103,7 +104,8 @@ int init_airspy(int freq)
 			airspy_error_name(result), result);
 	}
 
-	result = airspy_set_freq(device, freq + IFFREQ - INRATE/4);
+	Fc=(freq+IFFREQ-INRATE/4+FSINT/2)/FSINT*FSINT;
+	result = airspy_set_freq(device, Fc);
 	if (result != AIRSPY_SUCCESS) {
 		fprintf(stderr, "airspy_set_freq() failed: %s (%d)\n",
 			airspy_error_name(result), result);
@@ -112,9 +114,10 @@ int init_airspy(int freq)
 		return -1;
 	}
 
-	/* minimum bandwidth */
-	//airspy_r820t_write(device, 10, 0xB0 | 15);
-	//airspy_r820t_write(device, 11, 0xE0 | 8 );
+
+	/* set FI  bandwidth */
+	airspy_r820t_write(device, 10, 0xB0 | 15);
+	airspy_r820t_write(device, 11, 0xE0 | 8 );
 
         for (i = 0; i < DOWNSC; i++) {
                 Osc[i] =
