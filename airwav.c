@@ -21,7 +21,6 @@ int freq = 0;
 int fmdemod = 0;
 char *stid =  "airwav" ;
 char *directory = NULL;
-int gain = 1000;
 int rawout = 0;
 
 #if (WITH_RTL)
@@ -29,12 +28,14 @@ int initRtl(int dev_index, int fr);
 int runRtlSample(void);
 int devid = 0;
 int ppm = 0;
+int gain = 1000;
 static float threshold = 1e-7;
 #endif
 #ifdef WITH_AIRSPY
 int init_airspy(int freq);
 int runAirspy(void);
 static float threshold = 1e-8;
+int gain = 18;
 #endif
 
 static int interval=0;
@@ -52,17 +53,18 @@ static void usage(void)
 	fprintf(stderr, " -v :\t\t\t\tverbose\n");
 	fprintf(stderr, " -a :\t\t\traw stdout output (16 bit signed 12500Hz, no squelch)\n");
 	fprintf(stderr, " -f :\t\t\tFM demodulation (default AM)\n");
-	fprintf(stderr, " -g gain :\t\t\tgain in tenth of db (ie : 500 = 50 db)\n");
 	fprintf(stderr, " -t threshold:\t\t\tsquelch thresold in db (ie : -t -70)\n");
 	fprintf(stderr, " -l interval :\t\t\tmax duration of mp3 file in second (0=no limit)\n");
 	fprintf(stderr, " -d dir :\t\t\tstore in mp3 files in directoy dir instead of streaming to stdout\n");
 	fprintf(stderr, " -s name :\t\t\tmp3 file prefix name (default : airwav)\n");
 #if WITH_RTL
+	fprintf(stderr, " -g gain :\t\t\tgain in tenth of db (ie : 500 = 50 db)\n");
 	fprintf(stderr, " -p ppm :\t\t\tppm freq shift\n");
 	fprintf(stderr, " -r n :\t\t\trtl device number\n");
 	fprintf(stderr, "\n Example: airwav -s LFRN -d . -r 0 136.4 ");
 #endif
 #if WITH_AIR
+	fprintf(stderr, " -g gain :\t\t\tlinearity gain [0-21] default 18\n");
 	fprintf(stderr, "\n Example: airwav -s LFRN -d . 136.4 ");
 #endif
 	exit(1);

@@ -7,7 +7,7 @@
 #include "airwav.h"
 
 #define INRATE 5000000
-#define IFFREQ 1918400
+#define IFFREQ (154*FSINT)
 #define DOWNSC (INRATE/FSINT)
 
 extern int verbose;
@@ -95,16 +95,13 @@ int init_airspy(int freq)
 		return -1;
 	}
 
-	lg=(gain+540)/37;
-	if(lg>21) lg=21;
-	if(lg<0) lg=0;
-	result = airspy_set_linearity_gain(device, lg);
+	result = airspy_set_linearity_gain(device, gain);
 	if (result != AIRSPY_SUCCESS) {
 		fprintf(stderr, "airspy_set_linearity_gain() failed: %s (%d)\n",
 			airspy_error_name(result), result);
 	}
 
-	Fc=(freq+IFFREQ-INRATE/4+FSINT/2)/FSINT*FSINT;
+	Fc=freq+IFFREQ-INRATE/4;
 	result = airspy_set_freq(device, Fc);
 	if (result != AIRSPY_SUCCESS) {
 		fprintf(stderr, "airspy_set_freq() failed: %s (%d)\n",
